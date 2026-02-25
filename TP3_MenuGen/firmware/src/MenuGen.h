@@ -18,12 +18,25 @@ void MENU_Initialize(S_ParamGen *pParam);
 
 void MENU_Execute(S_ParamGen *pParam);
 
-#define ASTERISQUE 0
-#define AFFICHAGE 1
-#define FORME 2
-#define FREQUENCE 3
-#define AMPLITUDE 4
-#define OFFSET 5
+//Machines d'état
+#define SELECT 0
+#define EDIT 1
+#define AFFICHAGE 2
+#define FORME 3
+#define FREQUENCE 4
+#define AMPLITUDE 5
+#define OFFSET 6
+
+//Valeurs min et max
+#define VALFREQMAX 2000
+#define VALFREQMIN 20
+
+#define VALAMPLMAX 10000
+#define VALAMPLMIN 0
+
+#define VALOFFSETMAX 10000 //Cas spécial : l'offset min est à -5000
+#define VALOFFSETMIN 0  //Ajout d'une addition de +5000 pour éviter les -
+#define VALASOUSTRAIRE
 
 #endif
 

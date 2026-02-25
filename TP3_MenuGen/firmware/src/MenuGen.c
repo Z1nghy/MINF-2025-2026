@@ -35,6 +35,8 @@ void MENU_Execute(S_ParamGen *pParam)
     static uint8_t indiceForme = 0;
     static uint8_t indiceFrequence = 0;
     static uint8_t indiceAmplitude = 0;
+    static uint8_t indiceOffset = 0;
+    static uint16_t offsetPos = 0;
     static uint16_t valeurTest = 50;
     
     Incremente = Pec12IsPlus();
@@ -57,7 +59,7 @@ void MENU_Execute(S_ParamGen *pParam)
     /* Machine d'état menu */
     switch()
     {
-        case ASTERISQUE :
+        case SELECT :
                     
             switch(indiceAsterisque)
             {
@@ -88,6 +90,37 @@ void MENU_Execute(S_ParamGen *pParam)
             
             break;
             
+        case EDIT :
+            
+            switch(indiceAsterisque)
+            {
+                case 0 :
+                    lcd_gotoxy(1,1);
+                    printf_lcd("?Forme =");
+                    break;
+                    
+                case 1 :
+                    lcd_gotoxy(1,2);
+                    printf_lcd("?Freq [Hz] =");
+                    break;
+                    
+                case 2 :
+                    lcd_gotoxy(1,3);
+                    printf_lcd("?Ampl [mV] =");
+                    break;
+                    
+                case 3 :
+                    lcd_gotoxy(1,4);
+                    printf_lcd("?Offset [mV] =");
+                    break;
+                    
+                default :
+                    
+                    break;
+            }
+            
+            break;
+            
         case AFFICHAGE :
             
             switch()
@@ -98,22 +131,22 @@ void MENU_Execute(S_ParamGen *pParam)
                     {
                         case 0 :
                             lcd_gotoxy(1,1);
-                            printf_lcd("Forme = Sinus");
+                            printf_lcd("?Forme = Sinus");
                             break;
                             
                         case 1 :
                             lcd_gotoxy(1,1);
-                            printf_lcd("Forme = Triangle");
+                            printf_lcd("?Forme = Triangle");
                             break;
                             
                         case 2 :
                             lcd_gotoxy(1,1);
-                            printf_lcd("Forme = DentDeScie");
+                            printf_lcd("?Forme = DentDeScie");
                             break;
                             
                         case 3 :
                             lcd_gotoxy(1,1);
-                            printf_lcd("Forme = Carre");
+                            printf_lcd("?Forme = Carre");
                             break;
                             
                         default :
@@ -125,6 +158,16 @@ void MENU_Execute(S_ParamGen *pParam)
                     
                 case FREQUENCE :
                     
+                    //Dépassement de valeurs (Rebouclement)
+                    if(pParam->Frequence < VALFREQMIN) // 20Hz
+                    {
+                        pParam->Frequence = VALFREQMAX; // 2000Hz
+                    }
+                    if(pParam->Frequence > VALFREQMAX) // 2000Hz
+                    {
+                        pParam->Frequence = VALFREQMIN; // 20Hz
+                    }
+                    
                     switch(indiceFrequence)
                     {
                         
@@ -134,12 +177,38 @@ void MENU_Execute(S_ParamGen *pParam)
                     
                 case AMPLITUDE :
                     
+                    //Dépassement de valeurs (Rebouclement)
+                    if(pParam->Amplitude < VALAMPLMIN) // 0mV
+                    {
+                        pParam->Amplitude = VALAMPLMAX; // 10'000mV
+                    }
+                    if(pParam->Amplitude > VALAMPLMAX) // 10'000mV
+                    {
+                        pParam->Amplitude = VALAMPLMIN; // 0mV
+                    }
+                    
                     switch(indiceAmplitude)
                     {
                         
                     }
                     
                     break;
+                    
+                case OFFSET :
+                    
+                    //Dépassement de valeurs (Pas de rebouclement)
+                    if(pParam->Offset < VALOFFSETMIN) // 0mV
+                    {
+                        offsetPos = VALOFFSETMIN; // 0mV
+                    }
+                    if(pParam->Offset > VALOFFSETMAX) // 10'000mV
+                    {
+                        offsetPos = VALOFFSETMAX; // 10'000mV
+                    }
+                    
+                    pParam->Offset = offsetPos - VALASOUSTRAIRE; // -5'000mV
+                    
+                    
                     
                 default :
                     
@@ -158,6 +227,15 @@ void MENU_Execute(S_ParamGen *pParam)
                 indiceForme --;
             }
             
+            if((Pec12IsOK == 1)&&(Pec12IsESC == 0))
+            {
+                
+            }
+            if((Pec12IsESC == 1)&&(Pec12IsOK == 0))
+            {
+                
+            }
+            
             break;
         
         case FREQUENCE :
@@ -168,6 +246,15 @@ void MENU_Execute(S_ParamGen *pParam)
             if((Decremente == 1) && (Incremente == 0))
             {
                 indiceFrequence --;
+            }
+            
+            if((Pec12IsOK == 1)&&(Pec12IsESC == 0))
+            {
+                
+            }
+            if((Pec12IsESC == 1)&&(Pec12IsOK == 0))
+            {
+                
             }
             
             break;
@@ -182,6 +269,15 @@ void MENU_Execute(S_ParamGen *pParam)
                 indiceAmplitude --;
             }
             
+            if((Pec12IsOK == 1)&&(Pec12IsESC == 0))
+            {
+                
+            }
+            if((Pec12IsESC == 1)&&(Pec12IsOK == 0))
+            {
+                
+            }
+            
             break;
         
         default :
@@ -190,7 +286,3 @@ void MENU_Execute(S_ParamGen *pParam)
     }
     
 }
-
-
-
-
