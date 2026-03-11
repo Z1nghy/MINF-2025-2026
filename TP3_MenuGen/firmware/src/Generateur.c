@@ -11,6 +11,8 @@
 #include "Generateur.h"
 #include "DefMenuGen.h"
 #include "Mc32gestSpiDac.h"
+#include "math.h"
+#include "driver/tmr/drv_tmr.h"
 
 // T.P. 2016 100 echantillons
 #define MAX_ECH 100
