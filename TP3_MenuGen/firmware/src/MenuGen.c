@@ -44,16 +44,28 @@ void MENU_Execute(S_ParamGen *pParam)
     // static uint16_t valeurTest = 50;
     
     Incremente = Pec12IsPlus();
-    if (Incremente) Pec12ClearPlus();
+    if(Incremente) 
+    {
+        Pec12ClearPlus();
+    }
 
     Decremente = Pec12IsMinus();
-    if (Decremente) Pec12ClearMinus();
+    if(Decremente)
+    {
+        Pec12ClearMinus();
+    }
 
     OK = Pec12IsOK();
-    if (OK) Pec12ClearOK();
+    if(OK)
+    {
+        Pec12ClearOK();
+    }
 
     ESC = Pec12IsESC();
-    if (ESC) Pec12ClearESC();
+    if(ESC)
+    {
+       Pec12ClearESC();
+    }
     
     /* Test PEC 12
     if((Incremente == 1) && (Decremente == 0))
@@ -74,7 +86,7 @@ void MENU_Execute(S_ParamGen *pParam)
     switch(etatActuel)
     {
         case SELECT :
-            // 1. Mise à jour de TOUT l'affichage des curseurs
+            // 1. Mise à jour de l'affichage des curseurs
             // L'opérateur (condition) ? 'Vrai' : 'Faux' permet de choisir le caractère
             lcd_gotoxy(1,1); 
             printf_lcd("%cForme =         ", (indiceAsterisque == 0) ? '*' : ' ');
@@ -88,10 +100,7 @@ void MENU_Execute(S_ParamGen *pParam)
             lcd_gotoxy(1,4); 
             printf_lcd("%cOffset [mV] =   ", (indiceAsterisque == 3) ? '*' : ' ');
 
-            // J'ai ajouté des espaces après les "=" pour être sûr d'effacer 
-            // d'éventuels vieux caractères restés sur l'écran.
-
-            // 2. Logique de navigation (une seule fois suffit !)
+            // 2. Logique de navigation
             if((Incremente == 1) && (indiceAsterisque < 3))
             {
                 indiceAsterisque++;
@@ -122,10 +131,10 @@ void MENU_Execute(S_ParamGen *pParam)
             lcd_gotoxy(1,4); 
             printf_lcd("%cOffset[mV]= %-5d ", (indiceEdit == 3) ? '?' : ' ', pParam->Offset);
 
-            // --- SELECTION DU PARAMETRE A MODIFIER ---
+            //Selection du paramètre
             if(OK == 1)
             {
-                // On mémorise la valeur actuelle au cas où l'utilisateur fait ESC
+                
                 if (indiceEdit == 0)
                 {
                     backupValeur = pParam->Forme;
@@ -149,7 +158,7 @@ void MENU_Execute(S_ParamGen *pParam)
             }
             if(ESC == 1)
             {
-                etatActuel = SELECT; // Annule l'édition et remet l'étoile
+                etatActuel = SELECT; // Annule l'édition et retourne à l'état de sélection
             }
             
             break;
@@ -172,8 +181,7 @@ void MENU_Execute(S_ParamGen *pParam)
             if(OK == 1)
             {
                 etatActuel = SELECT;
-                // Appel de la fonction pour mettre à jour le signal généré [cite: 91]
-                // GENSIG_UpdateSignal(pParam); 
+                GENSIG_UpdateSignal(pParam); 
             }
             if(ESC == 1)
             {
@@ -210,8 +218,7 @@ void MENU_Execute(S_ParamGen *pParam)
             if(OK == 1)
             {
                 etatActuel = SELECT;
-                // Appel de la fonction pour modifier la période du timer [cite: 89, 90]
-                // GENSIG_UpdatePeriode(pParam);
+                GENSIG_UpdatePeriode(pParam);
             }
             if(ESC == 1)
             {
@@ -248,8 +255,7 @@ void MENU_Execute(S_ParamGen *pParam)
             if(OK == 1)
             {
                 etatActuel = SELECT;
-                // Appel de la fonction pour mettre à jour le signal généré [cite: 91]
-                // GENSIG_UpdateSignal(pParam);
+                GENSIG_UpdateSignal(pParam);
             }
             if(ESC == 1)
             {
@@ -286,8 +292,7 @@ void MENU_Execute(S_ParamGen *pParam)
             if(OK == 1)
             {
                 etatActuel = SELECT;
-                // Appel de la fonction pour mettre à jour le signal généré [cite: 91]
-                // GENSIG_UpdateSignal(pParam);
+                GENSIG_UpdateSignal(pParam);
             }
             if(ESC == 1)
             {

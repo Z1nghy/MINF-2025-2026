@@ -192,6 +192,10 @@ void APP_Tasks ( void )
 
             // Execution du menu
             MENU_Execute(&LocalParamGen);
+            //Execution du signal
+            GENSIG_UpdatePeriode(&LocalParamGen);
+            GENSIG_UpdateSignal(&LocalParamGen);
+            
             appData.state = APP_STATE_WAIT;
          break;
         /* TODO: implement your application state machine.*/
