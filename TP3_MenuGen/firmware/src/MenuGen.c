@@ -36,12 +36,14 @@ void MENU_Execute(S_ParamGen *pParam)
     uint8_t Decremente;
     uint8_t OK;
     uint8_t ESC;
-    static uint8_t etatActuel = 0;
-    // static uint8_t indiceParametre = 0;
+    
+    static uint8_t etatActuel = SELECT;
     static uint8_t indiceAsterisque = 0;
     static uint8_t indiceEdit = 0;
-    static int16_t backupValeur = 0;
-    // static uint16_t valeurTest = 50;
+    static int16_t valeurEdit = 0;
+    
+    static uint16_t saveTimer = 0;
+    static uint8_t saveStatus = 0;
     
     Incremente = Pec12IsPlus();
     if(Incremente) 
@@ -67,20 +69,15 @@ void MENU_Execute(S_ParamGen *pParam)
        Pec12ClearESC();
     }
     
-    /* Test PEC 12
-    if((Incremente == 1) && (Decremente == 0))
+    // Le rétroéclairage s'éteint après 5 secondes
+    if(Pec12NoActivity() == 1)
     {
-        valeurTest ++;
-        lcd_gotoxy(1,4);
-        printf_lcd("Valeur = %d", valeurTest);
+        lcd_bl_off(); // Éteint le rétroéclairage si inactif depuis 5s
     }
-    if((Decremente == 1) && (Incremente == 0))
+    else
     {
-        valeurTest --;
-        lcd_gotoxy(1,4);
-        printf_lcd("Valeur = %d", valeurTest);
-    }*/
-    
+        lcd_bl_on();  // Rallume (ou maintient allumé) dès qu'il y a de l'activité
+    }
         
     /* Machine d'état menu */
     switch(etatActuel)
@@ -121,138 +118,118 @@ void MENU_Execute(S_ParamGen *pParam)
             // 3. Validation
             if(OK == 1)
             {
-                etatActuel = EDIT;
-                indiceEdit = indiceAsterisque;
+                if(indiceAsterisque == 0)
+                {
+                    valeurEdit = pParam->Forme;
+                    etatActuel = FORME; // Remplaçant de ton EDIT
+                }
+                if(indiceAsterisque == 1)
+                {
+                    valeurEdit = pParam->Frequence;
+                    etatActuel = FREQUENCE;
+                }
+                if(indiceAsterisque == 2)
+                {
+                    valeurEdit = pParam->Amplitude;
+                    etatActuel = AMPLITUDE;
+                }
+                if(indiceAsterisque == 3)
+                {
+                    valeurEdit = pParam->Offset;
+                    etatActuel = OFFSET;
+                }
             }
             
             break;
             
         case EDIT :
-            // --- AFFICHAGE ---
+            if(valeurEdit > 3) valeurEdit = 0; // Sécurité si vide
+            
+            if((Incremente == 1) && (valeurEdit < 3))
+            {
+                valeurEdit++;
+            }
+            if((Decremente == 1) && (valeurEdit > 0))
+            {
+                valeurEdit--;
+            }
+            
             lcd_gotoxy(1,1); 
-            if(pParam->Forme <= 3)
-            {
-                printf_lcd("%cForme = %-10s", (indiceEdit == 0) ? '?' : ' ', MenuFormes[pParam->Forme]);
-            }
-            else
-            {
-                printf_lcd("%cForme =           ", (indiceEdit == 0) ? '?' : ' ');
-            }
-            
-            lcd_gotoxy(1,2); 
-            printf_lcd("%cFreq [Hz] = %-4d  ", (indiceEdit == 1) ? '?' : ' ', pParam->Frequence);
-            
-            lcd_gotoxy(1,3); 
-            printf_lcd("%cAmpl [mV] = %-5d ", (indiceEdit == 2) ? '?' : ' ', pParam->Amplitude);
-            
-            lcd_gotoxy(1,4); 
-            printf_lcd("%cOffset[mV]= %-5d ", (indiceEdit == 3) ? '?' : ' ', pParam->Offset);
+            printf_lcd("?Forme = %-10s", MenuFormes[valeurEdit]);
 
-            //Selection du paramètre
-            if (indiceEdit == 0)
-            {
-                backupValeur = pParam->Forme;
-                etatActuel = FORME;
-            }
-            if (indiceEdit == 1)
-            {
-                backupValeur = pParam->Frequence;
-                etatActuel = FREQUENCE;
-            }
-            if (indiceEdit == 2)
-            {
-                backupValeur = pParam->Amplitude;
-                etatActuel = AMPLITUDE;
-            }
-            if (indiceEdit == 3)
-            {
-                backupValeur = pParam->Offset;
-                etatActuel = OFFSET;
-            }
-            
-            if(ESC == 1)
-            {
-                etatActuel = SELECT; // Annule l'édition et retourne à l'état de sélection
-            }
-            
-            break;
-
-        case FORME :
-            if(pParam->Forme > 3)
-            {
-                // Si on était dans un état vide, on force sur Sinus (0) au 1er mouvement
-                if((Incremente == 1) || (Decremente == 1))
-                {
-                    pParam->Forme = 0;
-                }
-            }
-            else
-            {
-                if((Incremente == 1) && (pParam->Forme < 3))
-                {
-                    pParam->Forme++;
-                }
-                if((Decremente == 1) && (pParam->Forme > 0))
-                {
-                    pParam->Forme--;
-                }
-            }
-            
-            // --- AFFICHAGE TEMPS REEL ---
-            lcd_gotoxy(1,1); 
-            if(pParam->Forme <= 3)
-            {
-                printf_lcd("?Forme = %-10s", MenuFormes[pParam->Forme]);
-            }
-            else
-            {
-                printf_lcd("?Forme =           ");
-            }
-
-            // --- VALIDATION OU ANNULATION ---
             if(OK == 1)
             {
+                pParam->Forme = valeurEdit; // APPLICATION REELLE ICI !
                 etatActuel = SELECT;
                 GENSIG_UpdateSignal(pParam); 
             }
             if(ESC == 1)
             {
-                pParam->Forme = backupValeur;
-                etatActuel = SELECT;
+                etatActuel = SELECT; // Annulation : on ne touche pas à pParam->Forme
             }
             break;
                     
-        case FREQUENCE :
-            if(Incremente == 1)
+        case FORME :
+            if(valeurEdit > 3) 
             {
-                pParam->Frequence += 20;
-            }
-            if(Decremente == 1)
-            {
-                pParam->Frequence -= 20;
+                valeurEdit = 0; // Sécurité si vide
             }
             
-            // Rebouclement selon la donnée [cite: 63, 64]
-            if(pParam->Frequence < 20)
+            if((Incremente == 1) && (valeurEdit < 3))
             {
-                pParam->Frequence = 2000;
+                valeurEdit++;
             }
-            if(pParam->Frequence > 2000)
+            if((Decremente == 1) && (valeurEdit > 0))
             {
-                pParam->Frequence = 20;
+                valeurEdit--;
             }
             
-            lcd_gotoxy(1,2); 
-            printf_lcd("?Freq [Hz] = %-4d  ", pParam->Frequence);
+            lcd_gotoxy(1,1); 
+            printf_lcd("?Forme = %-10s", MenuFormes[valeurEdit]);
 
             if(OK == 1)
             {
+                pParam->Forme = valeurEdit;
+                etatActuel = SELECT;
+                GENSIG_UpdateSignal(pParam); 
+            }
+            if(ESC == 1)
+            {
+                etatActuel = SELECT;
+            }
+            break;
+            
+        case FREQUENCE :
+            if(Incremente == 1)
+            {
+                valeurEdit += 20;
+            }
+            if(Decremente == 1)
+            {
+                valeurEdit -= 20;
+            }
+            
+            // Rebouclement selon la donnée [cite: 63, 64]
+            if(valeurEdit < 20)
+            {
+                valeurEdit = 2000;
+            }
+            if(valeurEdit > 2000)
+            {
+                valeurEdit = 20;
+            }
+            
+            lcd_gotoxy(1,2); 
+            printf_lcd("?Freq [Hz] = %-4d  ", valeurEdit);
+
+            if(OK == 1)
+            {
+                pParam->Frequence = valeurEdit;
                 etatActuel = SELECT;
                 GENSIG_UpdatePeriode(pParam);
             }
             if(ESC == 1)
             {
-                pParam->Frequence = backupValeur;
                 etatActuel = SELECT;
             }
                     
@@ -261,34 +238,34 @@ void MENU_Execute(S_ParamGen *pParam)
         case AMPLITUDE :
             if(Incremente == 1)
             {
-                pParam->Amplitude += 100;
+                valeurEdit += 100;
             }
             if(Decremente == 1)
             {
-                pParam->Amplitude -= 100;
+                valeurEdit -= 100;
             }
             
             // Rebouclement selon la donnée [cite: 70]
-            if(pParam->Amplitude < 0)
+            if(valeurEdit < 0)
             {
-                pParam->Amplitude = 10000;
+                valeurEdit = 10000;
             }
-            if(pParam->Amplitude > 10000)
+            if(valeurEdit > 10000)
             {
-                pParam->Amplitude = 0;
+                valeurEdit = 0;
             }
             
             lcd_gotoxy(1,3); 
-            printf_lcd("?Ampl [mV] = %-5d ", pParam->Amplitude);
+            printf_lcd("?Ampl [mV] = %-5d ", valeurEdit);
 
             if(OK == 1)
             {
+                pParam->Amplitude = valeurEdit;
                 etatActuel = SELECT;
                 GENSIG_UpdateSignal(pParam);
             }
             if(ESC == 1)
             {
-                pParam->Amplitude = backupValeur;
                 etatActuel = SELECT;
             }
             
@@ -297,34 +274,34 @@ void MENU_Execute(S_ParamGen *pParam)
         case OFFSET :
             if(Incremente == 1)
             {
-                pParam->Offset += 100;
+                valeurEdit += 100;
             }
             if(Decremente == 1)
             {
-                pParam->Offset -= 100;
+                valeurEdit -= 100;
             }
                     
             // Butée (Pas de rebouclement) selon la donnée [cite: 75]
-            if(pParam->Offset < -5000)
+            if(valeurEdit < -5000)
             {
-                pParam->Offset = -5000;
+                valeurEdit = -5000;
             }
-            if(pParam->Offset > 5000)
+            if(valeurEdit > 5000)
             {
-                pParam->Offset = 5000;
+                valeurEdit = 5000;
             }
             
             lcd_gotoxy(1,4); 
-            printf_lcd("?Offset[mV]= %-5d ", pParam->Offset);
+            printf_lcd("?Offset[mV]= %-5d ", valeurEdit);
 
             if(OK == 1)
             {
+                pParam->Offset = valeurEdit;
                 etatActuel = SELECT;
                 GENSIG_UpdateSignal(pParam);
             }
             if(ESC == 1)
             {
-                pParam->Offset = backupValeur;
                 etatActuel = SELECT;
             }
             

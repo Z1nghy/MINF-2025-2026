@@ -144,18 +144,20 @@ void ScanPec12 (bool ValA, bool ValB, bool ValPB)
    Val_PB_Old = Val_PB; // Mémorisation de l'état pour le prochain cycle
    
    /* Gestion inactivité */
+   Pec12.InactivityDuration++;
    //La valeur du compteur reste en revanche à revoir
-   /*if((Val_PB == Val_PB_Old) && (A = A_Old) && (B_Pressed == B_Released) && (ActivityCounter == 5000))
-   {
-       //Eteindre rétroéclairage
-       Pec12.InactivityDuration = 0;
-       Pec12.NoActivity = 1;
-   }
-   else
-   {
-       Pec12.InactivityDuration ++;
-       Pec12.NoActivity = 0;
-   }*/
+   if(Pec12.InactivityDuration >= 5000) 
+    {
+        Pec12.NoActivity = 1; //Détection de non activité
+        
+        // Sécurité : on bloque le compteur à 5000 pour éviter qu'il ne 
+        // déborde (overflow) et reparte à 0 si on attend très longtemps.
+        Pec12.InactivityDuration = 5000; 
+    }
+    else
+    {
+        Pec12.NoActivity = 0; // Moins de 5 secondes = on est actif
+    }
 
    
  } // ScanPec12 

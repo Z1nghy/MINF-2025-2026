@@ -43,86 +43,63 @@ void  GENSIG_UpdatePeriode(S_ParamGen *pParam)
 // Mise à jour du signal (forme, amplitude, offset)
 void  GENSIG_UpdateSignal(S_ParamGen *pParam)
 {
-   static uint16_t center = 32676;
+    static uint16_t center = 32767.0;
     static int16_t Offset_old;
-    static int16_t Amplitude_old, amplitude, offset;
-    static uint16_t EchNb = 0;
-    const uint16_t Step = 65535 / MAX_ECH;
+    static int16_t Amplitude_old;
     
-    amplitude = (pParam->Amplitude * 65535) / 10000;
-    offset = (pParam->Offset * 65535) / 10000;
+    float amplitude = ((float)pParam->Amplitude / 10000.0) * 65535.0;
+    float offset = ((float)pParam->Offset / 10000.0) * 65535.0;
     //float amplitude_en_mV = (pParam ->Amplitude / 100) * 2 ;
     uint8_t i;
+    
     switch (pParam->Forme)
     {
         case SignalSinus:
-            if ((amplitude != Amplitude_old) || (offset != Offset_old))
+            for (i = 0; i < MAX_ECH; i++)
             {
-                for (i = 0; i < MAX_ECH; i++)
-                {
-                    Sample.SampTable[i] = center - offset + (amplitude/2)*sin((2*M_PI*i)/MAX_ECH);
-                }
+                Sample.SampTable[i] = (uint16_t)(center - offset + (amplitude / 2.0) * sin((2.0 * M_PI * i) / MAX_ECH));
             }
-                
         break;
+        
         case SignalTriangle:
-            
-            if ((amplitude != Amplitude_old) || (offset != Offset_old))
+            for (i = 0; i < MAX_ECH; i++)
             {
-                // montée
-                for (i = 0; i < MAX_ECH; i++)
+                if (i < (MAX_ECH / 2))
                 {
-                    if (i < MAX_ECH/2)
-                    {
-
-                        Sample.SampTable[i] = center - offset - (amplitude/2) + ((2 * amplitude * i) / MAX_ECH);
-                    }
-                    else
-                    {
-                        // montant
-                        Sample.SampTable[i] = center - offset + (amplitude/2) - (2 * amplitude * (i - MAX_ECH / 2) / MAX_ECH);
-                    }
-
+                    // Montée de -Ampl/2 à +Ampl/2
+                    Sample.SampTable[i] = (uint16_t)(center - offset - (amplitude / 2.0) + (amplitude * 2.0 * i) / MAX_ECH);
+                }
+                else
+                {
+                    // Descente de +Ampl/2 à -Ampl/2
+                    Sample.SampTable[i] = (uint16_t)(center - offset + (amplitude / 2.0) - (amplitude * 2.0 * (i - (MAX_ECH / 2))) / MAX_ECH);
                 }
             }
-                
-            
-            
         break;
+        
         case SignalDentDeScie:
-            if ((amplitude != Amplitude_old) || (offset != Offset_old))
+            for (i = 0; i < MAX_ECH; i++) 
             {
-                // exemple pour la dentde scie
-                for (i = 0; i < MAX_ECH; i++) 
-                {
-                    Sample.SampTable[i] = (center - offset + ( amplitude * i / MAX_ECH ) - (amplitude / 2));
-                }
+                // Montée de -Ampl/2 à +Ampl/2 sur toute la période
+                Sample.SampTable[i] = (uint16_t)(center - offset - (amplitude / 2.0) + (amplitude * i) / MAX_ECH);
             }
-            
-                
-            
-            
-            
         break;
+        
         case SignalCarre:
-            if ((amplitude != Amplitude_old) || (offset != Offset_old))
+            for (i = 0; i < MAX_ECH; i++) 
             {
-                for (i = 0; i < MAX_ECH; i++) 
+                if (i < (MAX_ECH / 2))
                 {
-                    if (i < (MAX_ECH / 2))
-                    {
-                        Sample.SampTable[i] = center - offset - amplitude/ 2  ; // Partie basse
-                    }
-                    else
-                    {
-                        Sample.SampTable[i] = center - offset + amplitude/ 2; // Partie haute
-                    }
+                    Sample.SampTable[i] = (uint16_t)(center - offset - (amplitude / 2.0)); // Partie basse
+                }
+                else
+                {
+                    Sample.SampTable[i] = (uint16_t)(center - offset + (amplitude / 2.0)); // Partie haute
                 }
             }
         break;
+        
         default:
-            
-            
         break;
     }
     
@@ -139,9 +116,8 @@ void  GENSIG_UpdateSignal(S_ParamGen *pParam)
 void  GENSIG_Execute(void)
 {
    static uint16_t EchNb = 0;
-   const uint16_t Step = 65535 / MAX_ECH;
-
-   SPI_WriteToDac(0, Step * EchNb );      // sur canal 0
+  
+   SPI_WriteToDac(0, Sample.SampTable[EchNb] );      // sur canal 0
    EchNb++;
    EchNb = EchNb % MAX_ECH;
 }
